@@ -27,6 +27,7 @@ public:
     UPROPERTY(EditAnywhere, Category="Handling") float HoverHeight=350.f;
     UPROPERTY(EditAnywhere, Category="Handling") float Thrust=2400.f;
     UPROPERTY(EditAnywhere, Category="Handling") float TurnRate=65.f;
+    UPROPERTY(EditAnywhere, Category="Handling") float MaxBankAngle=40.f;
     UPROPERTY(EditAnywhere, Category="Handling") float LateralGrip=.22f;
     UPROPERTY(EditAnywhere, Category="Handling") float MaxSpeed=11000.f;
     UPROPERTY(VisibleAnywhere) TObjectPtr<USphereComponent> Hull;
@@ -65,6 +66,7 @@ private:
     float Throttle=0.f, Steering=0.f, Brake=0.f, YawSpeed=0.f;
     float LiftInput=0.f, LeftAirBrake=0.f, RightAirBrake=0.f;
     float AppliedLift=0.f;
+    float BankAngle=0.f, BankAcceleration=0.f;
     bool bFlightTest=false;
     int32 FlightTestStage=0;
     double FlightTestAge=0.;

@@ -116,6 +116,7 @@ void AHoverPawn::Respawn()
     if (!Track || Track->Gates.IsEmpty()) return;
     SetActorTransform(Track->SpawnAt(Race.LastGate),false,nullptr,ETeleportType::TeleportPhysics);
     FlightVelocity=FVector::ZeroVector; YawSpeed=0.f; FixedRemainder=0.f;
+    BankAngle=BankAcceleration=AppliedLift=0.f;
     UE_LOG(LogTemp, Display, TEXT("CANYON_RESPAWN ships=%d gate=%d"),Race.Ships,Race.LastGate);
 }
 
@@ -243,7 +244,10 @@ void AHoverPawn::CourseTick(float Dt)
     const float Angle=FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw,Accel.Rotation().Yaw);
     Steering=FMath::Clamp(Angle/28.f,-1.f,1.f);
     Throttle=FMath::Clamp(float(Accel.Size()/Thrust),0.f,1.f)*FMath::Max(0.f,FMath::Cos(FMath::DegreesToRadians(Angle)));
-    Brake=FMath::Abs(Angle)>75.f?.4f:0.f;bBoost=false;
+    // Banking needs airflow: keep flying through large heading corrections instead
+    // of stopping and trying to pivot in place like the old direct-yaw controller.
+    if (FlightVelocity.Size2D()<2200.) Throttle=FMath::Max(Throttle,.3f);
+    Brake=FMath::Abs(Angle)>75.f && FlightVelocity.Size2D()>2400.?.4f:0.f;bBoost=false;
 }
 
 void AHoverPawn::MoveStep(float Dt)
@@ -253,12 +257,20 @@ void AHoverPawn::MoveStep(float Dt)
     FHitResult Ground;
     bool Grounded=GetWorld()->LineTraceSingleByChannel(Ground,Before,Before-FVector(0,0,1600),ECC_Visibility,Params)
         && Ground.ImpactNormal.Z>.35;
-    const float AirControl=Grounded?1.f:.30f;
     const float ForwardSpeed=FVector::DotProduct(FlightVelocity,GetActorForwardVector());
     const float CombinedBrake=FMath::Clamp(Brake+(LeftAirBrake+RightAirBrake)*.5f,0.f,1.f);
-    YawSpeed=FMath::FInterpTo(YawSpeed,Steering*TurnRate*AirControl+FCanyonAerodynamics::BrakeYaw(LeftAirBrake,RightAirBrake,ForwardSpeed),Dt,3.f);
-    AddActorWorldRotation(FRotator(0,YawSpeed*Dt,0));
-    const FVector Forward=GetActorForwardVector(), Right=GetActorRightVector();
+    const bool Active=Race.Phase==ERacePhase::Racing;
+    // Stick commands bank, not yaw. Smooth roll-in/roll-out retains a little turn after release.
+    const float RollStep=FMath::Clamp((Steering*MaxBankAngle-BankAngle)*4.f,-90.f,90.f);
+    BankAngle+=RollStep*Dt;
+    AppliedLift=Active?FCanyonAerodynamics::Lift(LiftInput,ForwardSpeed):0.f;
+    BankAcceleration=FCanyonAerodynamics::BankAcceleration(BankAngle,ForwardSpeed);
+    const float WingSideAcceleration=AppliedLift*FMath::Sin(FMath::DegreesToRadians(BankAngle));
+    const float BankTurn=FMath::Clamp(FCanyonAerodynamics::BankYaw(BankAcceleration+WingSideAcceleration,ForwardSpeed),-TurnRate,TurnRate);
+    YawSpeed=FMath::FInterpTo(YawSpeed,BankTurn+FCanyonAerodynamics::BrakeYaw(LeftAirBrake,RightAirBrake,ForwardSpeed),Dt,3.f);
+    SetActorRotation(FRotator(0,GetActorRotation().Yaw+YawSpeed*Dt,BankAngle));
+    const FRotator Heading(0,GetActorRotation().Yaw,0);
+    const FVector Forward=Heading.Vector(), Right=Heading.RotateVector(FVector::RightVector);
     FVector Accel(0,0,-980);
     if (Grounded)
     {
@@ -268,9 +280,10 @@ void AHoverPawn::MoveStep(float Dt)
         const float Lift=FMath::Clamp(980.f+(HoverHeight-Distance)*12.f-SurfaceVelocity*6.f,0.f,6500.f);
         Accel.Z+=Lift*(1.f+FMath::Min(0.f,LiftInput));
     }
-    const bool Active=Race.Phase==ERacePhase::Racing;
-    AppliedLift=Active?FCanyonAerodynamics::Lift(LiftInput,ForwardSpeed):0.f;
-    Accel.Z+=AppliedLift-FlightVelocity.Z*.85f*FMath::Abs(LiftInput);
+    // Hover suspension stays vertical. Aerodynamic lift banks with the craft, so pulling
+    // through a turn tightens the arc at the cost of some vertical lift.
+    Accel+=Right*BankAcceleration+GetActorUpVector()*AppliedLift;
+    Accel.Z-=FlightVelocity.Z*.85f*FMath::Abs(LiftInput);
     if (Active) Accel+=Forward*(Throttle*Thrust*(bBoost?1.65f:1.f));
     const FVector Horizontal(FlightVelocity.X,FlightVelocity.Y,0);
     Accel-=Horizontal*(.12f+.000006f*Horizontal.Size()+CombinedBrake*2.0f+FMath::Abs(LiftInput)*.10f);

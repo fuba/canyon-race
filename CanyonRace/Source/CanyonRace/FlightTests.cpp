@@ -2,6 +2,7 @@
 #include "CanyonTrack.h"
 #include "GameFramework/PlayerController.h"
 #include "InputKeyEventArgs.h"
+#include "Camera/CameraComponent.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "HAL/PlatformMisc.h"
@@ -56,8 +57,22 @@ void AHoverPawn::FlightTestTick(float Dt)
     case 6:
         if (FlightTestAge<1.5) return;
         if (!Check(FMath::Abs(GetActorLocation().Z-FlightTestStart.Z)<100,TEXT("pulling back at rest does not create free vertical thrust"))) return;
-        Key(EKeys::Down,false);
-        FFileHelper::SaveStringToFile(TEXT("PASS: configured lift/descent inputs, speed-dependent takeoff, left/right airborne brake turns, symmetric braking, no lift at rest"),*(FPaths::ProjectSavedDir()/TEXT("CanyonFlight.txt")));
+        Key(EKeys::Down,false);Setup(15000);Key(EKeys::D,true);FlightTestStage=7;break;
+    case 7:
+        if (FlightTestAge<1.5) return;
+        if (!Check(BankAngle>35 && GetActorRightVector().Z<-.5 && FMath::FindDeltaAngleDegrees(FlightTestYaw,GetActorRotation().Yaw)>15 && FVector::DotProduct(FlightVelocity,FRotator(0,FlightTestYaw,0).RotateVector(FVector::RightVector))>1500,TEXT("right stick banks right wing down and bends airborne trajectory right"))) return;
+        if (!Check(FMath::Abs(Camera->GetComponentRotation().Roll-BankAngle)<.1f,TEXT("pilot camera follows cockpit bank"))) return;
+        Key(EKeys::D,false);FlightTestAge=0.;FlightTestStage=8;break;
+    case 8:
+        if (FlightTestAge<1.5) return;
+        if (!Check(FMath::Abs(BankAngle)<1 && FMath::Abs(YawSpeed)<3,TEXT("neutral stick smoothly levels the craft and settles the turn"))) return;
+        Setup(15000);Key(EKeys::A,true);FlightTestStage=9;break;
+    case 9:
+        if (FlightTestAge<1.5) return;
+        if (!Check(BankAngle<-35 && GetActorRightVector().Z>.5 && FMath::FindDeltaAngleDegrees(FlightTestYaw,GetActorRotation().Yaw)<-15 && FVector::DotProduct(FlightVelocity,FRotator(0,FlightTestYaw,0).RotateVector(FVector::RightVector))<-1500,TEXT("left stick banks left wing down and bends airborne trajectory left"))) return;
+        Key(EKeys::A,false);Respawn();
+        if (!Check(BankAngle==0 && YawSpeed==0 && FMath::Abs(GetActorRotation().Roll)<.01f,TEXT("respawn clears bank and turn momentum"))) return;
+        FFileHelper::SaveStringToFile(TEXT("PASS: lift/descent, independent airbrakes, no lift at rest, left/right bank and trajectory, cockpit bank, neutral leveling, respawn reset"),*(FPaths::ProjectSavedDir()/TEXT("CanyonFlight.txt")));
         bFlightTest=false;FPlatformMisc::RequestExit(false);break;
     }
 }

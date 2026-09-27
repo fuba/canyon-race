@@ -19,7 +19,7 @@ void AHoverPawn::LoadRecord()
     const uint32 CourseHash=FCrc::MemCrc32(Terrain.GetData(),Terrain.Num(),FCrc::StrCrc32(*Route));
     const FString Folder=FString(FPlatformProcess::UserSettingsDir())/TEXT("CanyonRace/Records");
     IFileManager::Get().MakeDirectory(*Folder,true);
-    RecordFile=Folder/FString::Printf(TEXT("flight-v1-%08x.txt"),CourseHash);
+    RecordFile=Folder/FString::Printf(TEXT("bank-v1-%08x.txt"),CourseHash);
     FString Text;
     if (FFileHelper::LoadFileToString(Text,*RecordFile))
     {

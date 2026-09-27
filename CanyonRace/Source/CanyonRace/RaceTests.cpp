@@ -29,6 +29,12 @@ bool FAeroTest::RunTest(const FString&)
     TestTrue(TEXT("Lift grows with airspeed"),FCanyonAerodynamics::Lift(1,1500)<FCanyonAerodynamics::Lift(1,3000));
     TestEqual(TEXT("Symmetric airbrakes do not steer"),FCanyonAerodynamics::BrakeYaw(1,1,5000),0.f);
     TestTrue(TEXT("Independent left and right brakes turn toward their own side"),FCanyonAerodynamics::BrakeYaw(1,0,5000)<0 && FCanyonAerodynamics::BrakeYaw(0,1,5000)>0);
+    TestEqual(TEXT("Bank produces no sideways thrust at rest"),FCanyonAerodynamics::BankAcceleration(40,0),0.f);
+    TestEqual(TEXT("Level craft has no bank turn force"),FCanyonAerodynamics::BankAcceleration(0,6000),0.f);
+    const float Side=FCanyonAerodynamics::BankAcceleration(40,6000);
+    TestTrue(TEXT("Mirrored banks produce opposite forces"),FMath::IsNearlyEqual(Side,-FCanyonAerodynamics::BankAcceleration(-40,6000)) && Side>0);
+    TestTrue(TEXT("Same bank turns more slowly at higher airspeed"),FCanyonAerodynamics::BankYaw(Side,10000)<FCanyonAerodynamics::BankYaw(Side,6000));
+    TestTrue(TEXT("Positive bank dips right wing and tilts lift right"),FRotator(0,0,40).RotateVector(FVector::RightVector).Z<0 && FRotator(0,0,40).RotateVector(FVector::UpVector).Y>0);
     return true;
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTimeTrialTest,"Canyon.Rules.PersistentBestAndSplits",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
@@ -70,6 +76,9 @@ bool FReferenceRecenterTest::RunTest(const FString&)
         Seat=CanyonSeatCalibration(NewHead,-20,Eye);
         TestTrue(TEXT("Repeated reset preserves pilot position"),Seat.TransformPosition(NewHead).Equals(Eye,.001));
         TestTrue(TEXT("Repeated reset preserves forward"),Seat.TransformVector(FRotator(0,-20,0).Vector()).Equals(FVector::ForwardVector,.001));
+        const FTransform Craft(FRotator(0,75,40),FVector(10,20,30));
+        TestTrue(TEXT("Recenter retains eye anchor during a bank"),Craft.TransformPosition(Seat.TransformPosition(NewHead)).Equals(Craft.TransformPosition(Eye),.001));
+        TestTrue(TEXT("Recenter retains banked craft forward"),Craft.TransformVector(Seat.TransformVector(FRotator(0,-20,0).Vector())).Equals(Craft.GetRotation().GetForwardVector(),.001));
     }
     return true;
 }
