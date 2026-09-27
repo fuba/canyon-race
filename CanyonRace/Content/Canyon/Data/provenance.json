@@ -1,0 +1,10 @@
+{
+  "source": "USGS 3DEP",
+  "source_metadata": "../../../../data/terrain/horseshoe_bend.json",
+  "source_url": "https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer",
+  "grid_size": 505,
+  "spacing_m": 8,
+  "datum_m": 952.0629272460938,
+  "format": "little-endian float32 centimeters above datum; rows south, columns east",
+  "note": "8 m runtime sampling is not native source accuracy. Procedural mesh prototype, not a Landscape import."
+}

@@ -1,0 +1,86 @@
+[
+  {
+    "asset": "rock_face",
+    "kind": "Diffuse",
+    "file": "rock_face_color.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/rock_face/rock_face_diff_4k.jpg",
+    "md5": "bd14c0c0141ebee097ca38c607003181",
+    "page": "https://polyhaven.com/a/rock_face",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "f22c19c46d8a03b199b92d779d1e28a00481098177fba41c4f84cf100c5e7164",
+    "bytes": 11665139
+  },
+  {
+    "asset": "rock_face",
+    "kind": "nor_dx",
+    "file": "rock_face_normal.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/rock_face/rock_face_nor_dx_4k.jpg",
+    "md5": "f5571dbf29680f4bef45e3952ae2787e",
+    "page": "https://polyhaven.com/a/rock_face",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "39b609e278b0b784144230cc240d3f6e4dd3eccb7100ff458723dfc61a84e083",
+    "bytes": 14402138
+  },
+  {
+    "asset": "rock_face",
+    "kind": "arm",
+    "file": "rock_face_arm.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/rock_face/rock_face_arm_4k.jpg",
+    "md5": "359c74457930cbed4835a845e1787a15",
+    "page": "https://polyhaven.com/a/rock_face",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "f27f9ae0fc103b4104bd4ea3558eddeb1c01ef6919d719dfea1da646085552da",
+    "bytes": 5660924
+  },
+  {
+    "asset": "rocky_terrain_02",
+    "kind": "Diffuse",
+    "file": "rocky_terrain_02_color.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/rocky_terrain_02/rocky_terrain_02_diff_2k.jpg",
+    "md5": "68f9c94575ff3c3512be9b010eb03f0e",
+    "page": "https://polyhaven.com/a/rocky_terrain_02",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "9b042fe0618ffbc3650592456d7d8d265ba9a1cb5ce802f5f1d86b7ee79508a1",
+    "bytes": 3232826
+  },
+  {
+    "asset": "rocky_terrain_02",
+    "kind": "nor_dx",
+    "file": "rocky_terrain_02_normal.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/rocky_terrain_02/rocky_terrain_02_nor_dx_2k.jpg",
+    "md5": "b0c5657f30704fb939ea49451dc2efa2",
+    "page": "https://polyhaven.com/a/rocky_terrain_02",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "6a27e05ee713ef1d76485c11f27c1f861abab063bc1d4ba6719c85545bf886d9",
+    "bytes": 4146793
+  },
+  {
+    "asset": "rocky_terrain_02",
+    "kind": "arm",
+    "file": "rocky_terrain_02_arm.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/rocky_terrain_02/rocky_terrain_02_arm_2k.jpg",
+    "md5": "d86dcfb1f4dcd8bc2c49f5cf28dd6cce",
+    "page": "https://polyhaven.com/a/rocky_terrain_02",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "8d658c2836ca4b8e436b29cc4b909ac273289f689cd064c459d7e9ae0d554789",
+    "bytes": 1960945
+  },
+  {
+    "asset": "kloppenheim_06_puresky",
+    "kind": "hdri",
+    "file": "kloppenheim_06_puresky_sky.hdr",
+    "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/kloppenheim_06_puresky_4k.hdr",
+    "md5": "63e9826c43b973f8b6ecb07cb6a89227",
+    "page": "https://polyhaven.com/a/kloppenheim_06_puresky",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "sha256": "1bebd7cbbfb5c48a642f03d93bffbabb2c42d0b109061f37a72259d1cbdb3053",
+    "bytes": 17385661
+  }
+]

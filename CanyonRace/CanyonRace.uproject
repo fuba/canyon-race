@@ -1,0 +1,71 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "5.8",
+  "Category": "",
+  "Description": "PCVR hover racing prototype on USGS canyon terrain.",
+  "Plugins": [
+    {
+      "Name": "OpenXR",
+      "Enabled": true
+    },
+    {
+      "Name": "OpenXREyeTracker",
+      "Enabled": true
+    },
+    {
+      "Name": "OpenXRHandTracking",
+      "Enabled": true
+    },
+    {
+      "Name": "EnhancedInput",
+      "Enabled": true
+    },
+    {
+      "Name": "Niagara",
+      "Enabled": true
+    },
+    {
+      "Name": "XInputDevice",
+      "Enabled": true
+    },
+    {
+      "Name": "PythonScriptPlugin",
+      "Enabled": true
+    },
+    {
+      "Name": "AnimationData",
+      "Enabled": true
+    },
+    {
+      "Name": "ControlRig",
+      "Enabled": true
+    },
+    {
+      "Name": "IKRig",
+      "Enabled": true
+    },
+    {
+      "Name": "ProceduralMeshComponent",
+      "Enabled": true
+    },
+    {
+      "Name": "EditorScriptingUtilities",
+      "Enabled": true
+    },
+    {
+      "Name": "XRBase",
+      "Enabled": true
+    }
+  ],
+  "TargetPlatforms": [
+    "Windows"
+  ],
+  "DisableEnginePluginsByDefault": true,
+  "Modules": [
+    {
+      "Name": "CanyonRace",
+      "Type": "Runtime",
+      "LoadingPhase": "PostConfigInit"
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "name": "Horseshoe Bend terrain feasibility sample",
+  "retrieved_utc": "2026-09-26T19:22:24.603983+00:00",
+  "source": "https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer",
+  "request_url": "https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer/exportImage?f=json&bbox=452532.825666193%2C4079663.9108899995%2C456568.825666193%2C4083699.9108899995&bboxSR=32612&imageSR=32612&size=1009%2C1009&format=tiff&pixelType=F32&interpolation=RSP_BilinearInterpolation&renderingRule=%7B%22rasterFunction%22%3A+%22None%22%7D",
+  "attribution": "USGS National Map 3D Elevation Program (3DEP)",
+  "usage_source": "https://www.usgs.gov/3d-elevation-program/about-3dep-products-services",
+  "license_note": "USGS states 3DEP products are free of charge and without use restrictions. Preserve attribution.",
+  "sha256": "58e3eb9d3444520122a961f95327f15d983651aac98e1a3a3881d4bcacb6e5f2",
+  "center_wgs84": [
+    -111.51,
+    36.88
+  ],
+  "crs": "EPSG:32612",
+  "raster_bounds_m": [
+    452532.825666193,
+    4079663.9108899995,
+    456568.825666193,
+    4083699.9108899995
+  ],
+  "size": [
+    1009,
+    1009
+  ],
+  "sample_spacing_m": [
+    4.0,
+    4.0
+  ],
+  "landscape_extent_m": [
+    4032.0,
+    4032.0
+  ],
+  "elevation_min_m": 952.0629272460938,
+  "elevation_max_m": 1383.1639404296875,
+  "relief_m": 431.10101318359375,
+  "max_quantization_error_m": 0.0032890894342472166,
+  "unreal": {
+    "section_size_quads": 63,
+    "sections_per_component": 1,
+    "components": [
+      16,
+      16
+    ],
+    "scale_xyz": [
+      400.0,
+      400.0,
+      84.20070143816281
+    ],
+    "location_z_cm": 116761.67229277905,
+    "orientation": "Rows run north to south; columns west to east. Local +X=east, +Y=south.",
+    "note": "Z location retains absolute elevation; subtract a local datum for gameplay if desired."
+  },
+  "limitations": [
+    "4 m is output sampling, not a claim of native source accuracy/resolution.",
+    "Elevation mosaic only: no aerial photo, material, vegetation, or overhangs.",
+    "Candidate area only; racing route and playability are not yet validated."
+  ]
+}
