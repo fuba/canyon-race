@@ -3,7 +3,7 @@
 初版は手動リリース。自動runnerや定期ジョブは設置していません。
 
 1. 検証済みの変更をmainへマージする。`VERSION` と `DefaultGame.ini` のProjectVersionを更新する。
-2. mainが未変更の状態で `scripts/Build-Release.ps1` を実行する。
+2. 起動中のUnrealエディタ・試走版を終了し、mainが未変更の状態で `scripts/Build-Release.ps1` を実行する。
 3. スクリプトはmainの新しいクローンでエディタビルド、ルールテスト、ワールド検証、Win64パッケージ、両コースと新操作の走行検証を行う。
 4. `release/` のZIP、SHA-256、build-info.jsonを確認する。Saved、個人ログ、PDB、ビルドmanifestは配布しない。
 5. build-info.jsonのcommitとmainが一致することを確認し、そのcommitを指す `v<version>` のGitHub Releaseへ3ファイルをアップロードする。リリースノートは `docs/releases/<version>.md`。

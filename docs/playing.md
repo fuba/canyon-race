@@ -5,7 +5,7 @@ ZIP全体を展開し、`Play-VR.cmd`（SteamVR）または `Play-Desktop.cmd`�
 Windows PCからSteam Frameへの配信を想定したPCVR版です。
 SteamVRを起動し、OpenXRランタイムをSteamVRに設定してから実行してください。
 初回にランタイム不足の表示が出た場合は、同梱の
-`Engine/Extras/Redist/en-us/UEPrereqSetup_x64.exe` を実行します。
+`Engine/Extras/Redist/en-us/vc_redist.x64.exe` を実行します。
 
 | 操作 | Steam Frame | キーボード | Xbox系 |
 |---|---|---|---|
