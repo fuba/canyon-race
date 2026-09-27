@@ -41,6 +41,9 @@ for filename, label, color, line in [('route.csv', 'River Run', '#51d9ed', 0), (
     d.line([(680+x/4500*390,560-z) for x,z in zip(xs,zs)],fill=color,width=3)
     d.text((675,610+line*32),f'{label}: {distance/1000:.2f} km / {len(p)-1} gates',font=font,fill=color)
     print(f'{label}: {distance:.1f}m length, {min(zs):.1f}..{max(zs):.1f}m elevation, {zs[0]-zs[-1]:.1f}m start-to-finish drop')
-d.text((680,570),'0                    2                    4 km',font=font,fill='#9aabb9')
+for km in [0, 2, 4]:
+    x=680+km/4.5*390
+    d.line((x,560,x,565),fill='#9aabb9')
+    d.text((x,570),f'{km} km',font=font,fill='#9aabb9')
 d.text((20,695),'USGS 3DEP / 8 m runtime grid / +X east, +Y south',font=font,fill='#9aabb9')
 canvas.save(root/'docs/course-overview.png')

@@ -1,3 +1,4 @@
+#include "TimeTrial.h"
 #include "HoverPawn.h"
 #include "CanyonTrack.h"
 #include "HAL/PlatformProcess.h"
