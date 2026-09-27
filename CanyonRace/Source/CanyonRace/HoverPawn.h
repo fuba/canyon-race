@@ -11,6 +11,8 @@ class UTextRenderComponent;
 class ACanyonTrack;
 class UAudioComponent;
 class USoundBase;
+class UCanyonMovement;
+class UProceduralMeshComponent;
 
 UCLASS()
 class CANYONRACE_API AHoverPawn : public APawn
@@ -28,9 +30,12 @@ public:
     UPROPERTY(EditAnywhere, Category="Handling") float Thrust=2400.f;
     UPROPERTY(EditAnywhere, Category="Handling") float TurnRate=65.f;
     UPROPERTY(EditAnywhere, Category="Handling") float MaxBankAngle=40.f;
+    UPROPERTY(EditAnywhere, Category="Handling") float MaxPitchAngle=85.f;
     UPROPERTY(EditAnywhere, Category="Handling") float LateralGrip=.22f;
     UPROPERTY(EditAnywhere, Category="Handling") float MaxSpeed=11000.f;
     UPROPERTY(VisibleAnywhere) TObjectPtr<USphereComponent> Hull;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UCanyonMovement> Movement;
+    UPROPERTY(VisibleAnywhere) TObjectPtr<UProceduralMeshComponent> VernierFlames;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UCameraComponent> Camera;
     UPROPERTY(VisibleAnywhere) TObjectPtr<USceneComponent> SeatTrackingRoot;
     UPROPERTY(VisibleAnywhere) TObjectPtr<UTextRenderComponent> Dashboard;
@@ -65,9 +70,18 @@ private:
     void FlushTelemetry();
     float Throttle=0.f, Steering=0.f, Brake=0.f, YawSpeed=0.f;
     float LiftInput=0.f, LeftAirBrake=0.f, RightAirBrake=0.f;
-    float AppliedLift=0.f;
+    float AppliedThrust=0.f, ReverseLeft=0.f, ReverseRight=0.f;
+    float PitchAngle=0.f, PitchRate=0.f, RollRate=0.f;
     float BankAngle=0.f, BankAcceleration=0.f;
+    int32 ContactHits=0;
+    float RequestedMove=0.f, ActualMove=0.f, BlockedSeconds=0.f;
+    FVector ContactNormal=FVector::ZeroVector;
+    FString ContactName;
+    void MoveWithContacts(float Dt);
+    void UpdateVerniers();
     bool bFlightTest=false;
+    bool bContactTest=false;
+    void ContactTest();
     int32 FlightTestStage=0;
     double FlightTestAge=0.;
     FVector FlightTestStart;

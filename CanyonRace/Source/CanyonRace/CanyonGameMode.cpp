@@ -25,7 +25,7 @@ void ACanyonHUD::DrawHUD()
     DrawText(P->StatusText(),FLinearColor(1,.65f,.2f),42,122,nullptr,1.1f);
     DrawText(P->RecordText(),FLinearColor(.2f,.9f,1),42,150,nullptr,1.15f);
     DrawRect(FLinearColor(.02f,.03f,.04f,.85f),24,H-66,W-48,42);
-    DrawText(TEXT("W thrust   AD steer   DOWN/UP lift/dive   Q/E airbrakes   S brake   SHIFT boost   BACKSPACE recover   R restart   ESC quit"),FLinearColor(.75f,.85f,.9f),36,H-54,nullptr,.95f);
+    DrawText(TEXT("W thrust   AD bank   DOWN/UP pitch   Q/E reverse jets   S both jets   SHIFT boost   BACKSPACE recover   R restart   ESC quit"),FLinearColor(.75f,.85f,.9f),36,H-54,nullptr,.95f);
     if (P->Track && P->Track->Gates.IsValidIndex(P->Race.LastGate+1))
     {
         const FVector Goal=P->Track->Gates[P->Race.LastGate+1]+FVector(0,0,900);

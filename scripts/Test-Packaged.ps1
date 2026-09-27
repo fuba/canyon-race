@@ -4,7 +4,7 @@ $taskRoot = Split-Path $PSScriptRoot -Parent
 $package = if ($BuildDirectory) { [IO.Path]::GetFullPath($BuildDirectory) } else { Join-Path $taskRoot 'build\Windows' }
 $game = Join-Path $package 'CanyonRace\Binaries\Win64\CanyonRace.exe'
 $saved = Join-Path $package 'CanyonRace\Saved'
-foreach ($check in @(@('CanyonSmokeTest','CanyonSmoke.txt','river'),@('CanyonFlightTest','CanyonFlight.txt','river'),@('CanyonCourseTest','CanyonCourse.txt','river'),@('CanyonCourseTest','CanyonCourse.txt','summit'))) {
+foreach ($check in @(@('CanyonSmokeTest','CanyonSmoke.txt','river'),@('CanyonFlightTest','CanyonFlight.txt','river'),@('CanyonContactTest','CanyonContact.txt','river'),@('CanyonCourseTest','CanyonCourse.txt','river'),@('CanyonCourseTest','CanyonCourse.txt','summit'))) {
     $result = Join-Path $saved $check[1]
     if (Test-Path -LiteralPath $result) { Move-Item -LiteralPath $result -Destination "$result.previous" -Force }
     $checkArgs = @('-unattended','-nosound','-nohmd','-nullrhi','-UseFixedTimeStep','-FPS=60',('-'+$check[0]),('-CanyonCourse='+$check[2]))

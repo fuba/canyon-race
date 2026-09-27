@@ -22,13 +22,10 @@ bool FFrameKeysTest::RunTest(const FString&)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAeroTest,"Canyon.Rules.AerodynamicControls",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
 bool FAeroTest::RunTest(const FString&)
 {
-    TestEqual(TEXT("No lift at zero airflow"),FCanyonAerodynamics::Lift(1,0),0.f);
-    TestEqual(TEXT("Reversing does not create forward wing lift"),FCanyonAerodynamics::Lift(1,-5000),0.f);
-    TestTrue(TEXT("Takeoff authority overcomes gravity at speed"),FCanyonAerodynamics::Lift(1,3500)>980);
-    TestTrue(TEXT("Push forward forces descent"),FCanyonAerodynamics::Lift(-1,3500)<0);
-    TestTrue(TEXT("Lift grows with airspeed"),FCanyonAerodynamics::Lift(1,1500)<FCanyonAerodynamics::Lift(1,3000));
-    TestEqual(TEXT("Symmetric airbrakes do not steer"),FCanyonAerodynamics::BrakeYaw(1,1,5000),0.f);
-    TestTrue(TEXT("Independent left and right brakes turn toward their own side"),FCanyonAerodynamics::BrakeYaw(1,0,5000)<0 && FCanyonAerodynamics::BrakeYaw(0,1,5000)>0);
+    TestEqual(TEXT("No reverse thrust without input"),FCanyonAerodynamics::ReverseThrust(0,0),0.f);
+    TestEqual(TEXT("Both reverse jets double deceleration"),FCanyonAerodynamics::ReverseThrust(1,1),2*FCanyonAerodynamics::ReverseThrust(1,0));
+    TestEqual(TEXT("Symmetric reverse jets cancel yaw"),FCanyonAerodynamics::ReverseYaw(1,1),0.f);
+    TestTrue(TEXT("Wing reverse jets yaw into the firing side without airflow"),FCanyonAerodynamics::ReverseYaw(1,0)<0 && FCanyonAerodynamics::ReverseYaw(0,1)>0);
     TestEqual(TEXT("Bank produces no sideways thrust at rest"),FCanyonAerodynamics::BankAcceleration(40,0),0.f);
     TestEqual(TEXT("Level craft has no bank turn force"),FCanyonAerodynamics::BankAcceleration(0,6000),0.f);
     const float Side=FCanyonAerodynamics::BankAcceleration(40,6000);

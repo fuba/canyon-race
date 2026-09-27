@@ -21,7 +21,7 @@ for r in i:
 result={'session':str(root.resolve()),'duration_s':float(f[-1]['t_s']) if f else 0,'frames':len(f),'missing_frame_rows':int(f[-1]['frame'])-int(f[0]['frame'])+1-len(f) if f else 0,'pose_samples':len(p),
  'profiles':{side:sorted({r[side+'_profile'] for r in p}) for side in ['left','right']},
  'state_counts':{k:{v:sum(r[k]==v for r in p) for v in sorted({r[k] for r in p})} for k in ['hmd_enabled','hmd_tracked','has_vr_focus','seat_calibrated','left_tracking','right_tracking']},
- 'ranges':{k:bounds(k) for k in ['throttle','steer','brake','lift','left_airbrake','right_airbrake','lift_cm_s2','bank_deg','yaw_rate_deg_s','bank_accel_cm_s2','speed_cm_s','camera_vs_nose_deg','hp','gate']},
+ 'ranges':{k:bounds(k) for k in ['throttle','steer','brake','pitch_input','pawn_pitch','pitch_rate_deg_s','left_reverse','right_reverse','thrust_cm_s2','contact_hits','penetration_attempts','requested_move_cm','actual_move_cm','blocked_s','lift','left_airbrake','right_airbrake','lift_cm_s2','bank_deg','yaw_rate_deg_s','bank_accel_cm_s2','speed_cm_s','camera_vs_nose_deg','hp','gate']},
  'timings':{k:timing(k) for k in ['wall_ms','game_thread_ms','render_thread_ms','rhi_thread_ms','gpu_ms']},'active_raw_inputs':active}
 (root/'summary.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
 print(json.dumps(result,ensure_ascii=False,indent=2))

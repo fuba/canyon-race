@@ -1,4 +1,5 @@
 #include "HoverPawn.h"
+#include "CanyonMovement.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerInput.h"
@@ -25,11 +26,11 @@ void AHoverPawn::StartTelemetry()
             if (!Key.IsAxis2D() && !Key.IsAxis3D()) TelemetryKeys.Add(Key);
     }
     APlayerController* PC=Cast<APlayerController>(Controller);
-    const FString Meta=FString::Printf(TEXT("CanyonRace telemetry v3\nUTC=%s\nPlayerInput=%s\nKeys=%d\nUnits: centimeters, degrees, seconds; frame timing milliseconds\nposes.csv: 20 Hz game-thread poses (not late-render poses), resolved actions and tracking/profile state\ninputs.csv: engine raw-key changes sampled each game tick, analog threshold 0.005\nframes.csv: every game tick wall and simulation intervals\nEach buffer flushes once per second and at normal exit. Last <=1s may be absent after a crash.\nCommandLine=%s\n"),*FDateTime::UtcNow().ToIso8601(),PC && PC->PlayerInput?*PC->PlayerInput->GetClass()->GetName():TEXT("none"),TelemetryKeys.Num(),FCommandLine::Get());
+    const FString Meta=FString::Printf(TEXT("CanyonRace telemetry v4\nBuild=%s\nUTC=%s\nPlayerInput=%s\nKeys=%d\nUnits: centimeters, degrees, seconds; frame timing milliseconds\nposes.csv: 20 Hz game-thread poses (not late-render poses), resolved actions and tracking/profile state\ninputs.csv: engine raw-key changes sampled each game tick, analog threshold 0.005\nframes.csv: every game tick wall and simulation intervals\nEach buffer flushes once per second and at normal exit. Last <=1s may be absent after a crash.\nCommandLine=%s\n"),TEXT(CANYON_VERSION),*FDateTime::UtcNow().ToIso8601(),PC && PC->PlayerInput?*PC->PlayerInput->GetClass()->GetName():TEXT("none"),TelemetryKeys.Num(),FCommandLine::Get());
     FFileHelper::SaveStringToFile(Meta,*(TelemetryDir/TEXT("session.txt")));
     FrameBuffer=TEXT("t_s,frame,wall_ms,simulation_ms,game_thread_ms,render_thread_ms,rhi_thread_ms,gpu_ms\n");
     InputBuffer=TEXT("t_s,frame,key,value\n");
-    TelemetryBuffer=TEXT("t_s,frame,phase,gate,hp,ships,race_s,throttle,steer,brake,boost,speed_cm_s,vx,vy,vz,px,py,pz,pawn_yaw,head_x,head_y,head_z,head_pitch,head_yaw,head_roll,camera_x,camera_y,camera_z,camera_pitch,camera_yaw,camera_roll,camera_vs_nose_deg,seat_calibrated,hmd_enabled,hmd_tracked,uses_vr_focus,has_vr_focus,left_valid,left_tracking,left_x,left_y,left_z,left_pitch,left_yaw,left_roll,right_valid,right_tracking,right_x,right_y,right_z,right_pitch,right_yaw,right_roll,left_profile,right_profile,origin_revision,calibration_count,recenter_pending,lift,left_airbrake,right_airbrake,lift_cm_s2,bank_deg,yaw_rate_deg_s,bank_accel_cm_s2\n");
+    TelemetryBuffer=TEXT("t_s,frame,phase,gate,hp,ships,race_s,throttle,steer,brake,boost,speed_cm_s,vx,vy,vz,px,py,pz,pawn_yaw,head_x,head_y,head_z,head_pitch,head_yaw,head_roll,camera_x,camera_y,camera_z,camera_pitch,camera_yaw,camera_roll,camera_vs_nose_deg,seat_calibrated,hmd_enabled,hmd_tracked,uses_vr_focus,has_vr_focus,left_valid,left_tracking,left_x,left_y,left_z,left_pitch,left_yaw,left_roll,right_valid,right_tracking,right_x,right_y,right_z,right_pitch,right_yaw,right_roll,left_profile,right_profile,origin_revision,calibration_count,recenter_pending,pitch_input,left_reverse,right_reverse,thrust_cm_s2,bank_deg,yaw_rate_deg_s,bank_accel_cm_s2,pawn_pitch,pitch_rate_deg_s,contact_hits,penetration_attempts,requested_move_cm,actual_move_cm,blocked_s,contact_nx,contact_ny,contact_nz\n");
     FlushTelemetry();
     UE_LOG(LogTemp,Display,TEXT("CANYON_TELEMETRY %s"),*FPaths::ConvertRelativePathToFull(TelemetryDir));
 }
@@ -70,7 +71,9 @@ void AHoverPawn::RecordTelemetry(float Dt)
         Row+=FString::Printf(TEXT(",%.3f,%d,%d,%d,%d,%d,%d,%d"),FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw,Camera->GetComponentRotation().Yaw),bSeatCalibrated,UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled(),UHeadMountedDisplayFunctionLibrary::HasValidTrackingPosition(),UsesFocus,HasFocus,L.bValid,int32(L.TrackingStatus));
         Vector(L.ControllerLocation);Rotation(L.ControllerRotation.Rotator());
         Row+=FString::Printf(TEXT(",%d,%d"),R.bValid,int32(R.TrackingStatus));Vector(R.ControllerLocation);Rotation(R.ControllerRotation.Rotator());
-        Row+=TEXT(",")+LP+TEXT(",")+RP+FString::Printf(TEXT(",%llu,%d,%d,%.4f,%.4f,%.4f,%.3f,%.3f,%.3f,%.3f\n"),LastReferenceRevision,SeatCalibrationCount,bRuntimeRecenterPending,LiftInput,LeftAirBrake,RightAirBrake,AppliedLift,BankAngle,YawSpeed,BankAcceleration);TelemetryBuffer+=Row;
+        Row+=TEXT(",")+LP+TEXT(",")+RP+FString::Printf(TEXT(",%llu,%d,%d,%.4f,%.4f,%.4f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d,%d,%.3f,%.3f,%.3f"),LastReferenceRevision,SeatCalibrationCount,bRuntimeRecenterPending,LiftInput,ReverseLeft,ReverseRight,AppliedThrust,BankAngle,YawSpeed,BankAcceleration,PitchAngle,PitchRate,ContactHits,Movement->PenetrationAttempts,RequestedMove,ActualMove,BlockedSeconds);
+        Vector(ContactNormal);Row+=TEXT("\n");TelemetryBuffer+=Row;
+        ContactHits=Movement->PenetrationAttempts=0;RequestedMove=ActualMove=0.f;
     }
     if (TelemetryFlushElapsed>=1.f) {FlushTelemetry();TelemetryFlushElapsed=0.f;}
 }

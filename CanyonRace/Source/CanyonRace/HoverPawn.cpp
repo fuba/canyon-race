@@ -23,6 +23,8 @@
 #include "SeatCalibration.h"
 #include "CanyonXRRecenter.h"
 #include "FlightControls.h"
+#include "CanyonMovement.h"
+#include "ProceduralMeshComponent.h"
 
 AHoverPawn::AHoverPawn()
 {
@@ -32,6 +34,12 @@ AHoverPawn::AHoverPawn()
     Hull->SetCollisionProfileName(TEXT("Pawn"));
     Hull->SetSimulatePhysics(false);
     RootComponent=Hull;
+    Movement=CreateDefaultSubobject<UCanyonMovement>(TEXT("SweptMovement"));
+    Movement->PrimaryComponentTick.bCanEverTick=false;
+    VernierFlames=CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("VernierFlames"));
+    VernierFlames->SetupAttachment(RootComponent);
+    VernierFlames->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    VernierFlames->SetCastShadow(false);
     SeatTrackingRoot=CreateDefaultSubobject<USceneComponent>(TEXT("SeatTrackingOrigin"));
     SeatTrackingRoot->SetupAttachment(RootComponent);SeatTrackingRoot->SetRelativeLocation(SeatEye);
     Camera=CreateDefaultSubobject<UCameraComponent>(TEXT("PilotCamera"));
@@ -54,6 +62,8 @@ AHoverPawn::AHoverPawn()
 void AHoverPawn::BeginPlay()
 {
     Super::BeginPlay();
+    Movement->SetUpdatedComponent(Hull);
+    VernierFlames->SetMaterial(0,LoadObject<UMaterialInterface>(nullptr,TEXT("/Game/Canyon/Materials/M_Vernier.M_Vernier")));
     UE_LOG(LogTemp,Display,TEXT("CANYON_VERSION %s"),TEXT(CANYON_VERSION));
     for (TActorIterator<ACanyonTrack> It(GetWorld()); It; ++It) { Track=*It; break; }
     if (!Track) Track=GetWorld()->SpawnActor<ACanyonTrack>();
@@ -77,6 +87,7 @@ void AHoverPawn::BeginPlay()
     bSmoke=FParse::Param(FCommandLine::Get(),TEXT("CanyonSmokeTest"));
     bCourseTest=FParse::Param(FCommandLine::Get(),TEXT("CanyonCourseTest"));
     bFlightTest=FParse::Param(FCommandLine::Get(),TEXT("CanyonFlightTest"));
+    bContactTest=FParse::Param(FCommandLine::Get(),TEXT("CanyonContactTest"));
     LoadRecord();
     RestartRace();
     StartTelemetry();
@@ -116,7 +127,8 @@ void AHoverPawn::Respawn()
     if (!Track || Track->Gates.IsEmpty()) return;
     SetActorTransform(Track->SpawnAt(Race.LastGate),false,nullptr,ETeleportType::TeleportPhysics);
     FlightVelocity=FVector::ZeroVector; YawSpeed=0.f; FixedRemainder=0.f;
-    BankAngle=BankAcceleration=AppliedLift=0.f;
+    BankAngle=BankAcceleration=AppliedThrust=PitchAngle=PitchRate=RollRate=ReverseLeft=ReverseRight=0.f;
+    BlockedSeconds=0.f;
     UE_LOG(LogTemp, Display, TEXT("CANYON_RESPAWN ships=%d gate=%d"),Race.Ships,Race.LastGate);
 }
 
@@ -147,6 +159,7 @@ void AHoverPawn::Tick(float Dt)
 {
     Super::Tick(Dt);
     if (!Track) return;
+    if (bContactTest) { ContactTest();bContactTest=false;return; }
     const uint64 ReferenceRevision=CanyonAppliedReferenceRevision();
     if (ReferenceRevision!=LastReferenceRevision)
     {
@@ -163,7 +176,8 @@ void AHoverPawn::Tick(float Dt)
         TrackingStableTime=UHeadMountedDisplayFunctionLibrary::HasValidTrackingPosition() && (!UsesFocus || HasFocus)?TrackingStableTime+Dt:0.f;
         if (TrackingStableTime>.5f) ApplySeatCalibration(TEXT("startup"));
     }
-    if (bCalibrateOnFirstThrottle && Throttle>.05f && ApplySeatCalibration(TEXT("first_throttle"))) bCalibrateOnFirstThrottle=false;
+    const bool PropulsionInput=Throttle>.05f || Brake>.05f || LeftAirBrake>.05f || RightAirBrake>.05f;
+    if (bCalibrateOnFirstThrottle && PropulsionInput && ApplySeatCalibration(TEXT("first_thrust"))) bCalibrateOnFirstThrottle=false;
     if (!bCaptured && GetGameTimeSinceCreation()>3.f && FParse::Param(FCommandLine::Get(),TEXT("CanyonCaptureShot")))
     {
         bCaptured=true;
@@ -174,7 +188,7 @@ void AHoverPawn::Tick(float Dt)
     if (bFlightTest) FlightTestTick(Dt);
     if (FParse::Param(FCommandLine::Get(),TEXT("CanyonBenchmark"))) BenchmarkTick();
     if (bCaptured && GetGameTimeSinceCreation()>8.f && FParse::Param(FCommandLine::Get(),TEXT("CanyonCaptureExit"))) FPlatformMisc::RequestExit(false);
-    if (Throttle>.05f) Race.Start();
+    if (PropulsionInput) Race.Start();
     if (Race.Tick(Dt)) Respawn();
     if (Race.Phase==ERacePhase::Ready || Race.Phase==ERacePhase::Racing)
     {
@@ -192,6 +206,7 @@ void AHoverPawn::Tick(float Dt)
     EngineAudio->SetVolumeMultiplier(bMuted?0.f:(Race.Phase==ERacePhase::Racing?.18f+Throttle*.20f:.07f));
     DashElapsed+=Dt;
     if (DashElapsed>.1f) { UpdateDashboard(); DashElapsed=0.f; }
+    UpdateVerniers();
     RecordTelemetry(Dt);
 }
 
@@ -258,19 +273,19 @@ void AHoverPawn::MoveStep(float Dt)
     bool Grounded=GetWorld()->LineTraceSingleByChannel(Ground,Before,Before-FVector(0,0,1600),ECC_Visibility,Params)
         && Ground.ImpactNormal.Z>.35;
     const float ForwardSpeed=FVector::DotProduct(FlightVelocity,GetActorForwardVector());
-    const float CombinedBrake=FMath::Clamp(Brake+(LeftAirBrake+RightAirBrake)*.5f,0.f,1.f);
     const bool Active=Race.Phase==ERacePhase::Racing;
-    // Stick commands bank, not yaw. Smooth roll-in/roll-out retains a little turn after release.
-    const float RollStep=FMath::Clamp((Steering*MaxBankAngle-BankAngle)*4.f,-90.f,90.f);
-    BankAngle+=RollStep*Dt;
-    AppliedLift=Active?FCanyonAerodynamics::Lift(LiftInput,ForwardSpeed):0.f;
-    BankAcceleration=FCanyonAerodynamics::BankAcceleration(BankAngle,ForwardSpeed);
-    const float WingSideAcceleration=AppliedLift*FMath::Sin(FMath::DegreesToRadians(BankAngle));
-    const float BankTurn=FMath::Clamp(FCanyonAerodynamics::BankYaw(BankAcceleration+WingSideAcceleration,ForwardSpeed),-TurnRate,TurnRate);
-    YawSpeed=FMath::FInterpTo(YawSpeed,BankTurn+FCanyonAerodynamics::BrakeYaw(LeftAirBrake,RightAirBrake,ForwardSpeed),Dt,3.f);
-    SetActorRotation(FRotator(0,GetActorRotation().Yaw+YawSpeed*Dt,BankAngle));
-    const FRotator Heading(0,GetActorRotation().Yaw,0);
-    const FVector Forward=Heading.Vector(), Right=Heading.RotateVector(FVector::RightVector);
+    ReverseLeft=FMath::Max(Brake,LeftAirBrake);ReverseRight=FMath::Max(Brake,RightAirBrake);
+    RollRate=FMath::Clamp((Steering*MaxBankAngle-BankAngle)*4.f,-90.f,90.f);
+    PitchRate=FMath::Clamp((LiftInput*MaxPitchAngle-PitchAngle)*4.f,-100.f,100.f);
+    BankAngle+=RollRate*Dt;PitchAngle+=PitchRate*Dt;
+    // Attitude jets work without airflow. Pitch is bounded away from the Euler singularity.
+    BankAcceleration=FCanyonAerodynamics::BankAcceleration(BankAngle,ForwardSpeed)*FMath::Cos(FMath::DegreesToRadians(PitchAngle));
+    const float BankTurn=FMath::Clamp(FCanyonAerodynamics::BankYaw(BankAcceleration,ForwardSpeed),-TurnRate,TurnRate);
+    const float LowSpeedYaw=Steering*18.f*(1.f-FCanyonAerodynamics::Authority(ForwardSpeed));
+    YawSpeed=FMath::FInterpTo(YawSpeed,BankTurn+LowSpeedYaw+FCanyonAerodynamics::ReverseYaw(ReverseLeft,ReverseRight),Dt,3.f);
+    SetActorRotation(FRotator(PitchAngle,GetActorRotation().Yaw+YawSpeed*Dt,BankAngle));
+    const FVector Forward=GetActorForwardVector();
+    const FVector Right=FRotator(0,GetActorRotation().Yaw,0).RotateVector(FVector::RightVector);
     FVector Accel(0,0,-980);
     if (Grounded)
     {
@@ -278,36 +293,16 @@ void AHoverPawn::MoveStep(float Dt)
         // Positive lift only: leaving a cliff never pulls the craft down to the valley floor.
         const float SurfaceVelocity=FVector::DotProduct(FlightVelocity,Ground.ImpactNormal)/Ground.ImpactNormal.Z;
         const float Lift=FMath::Clamp(980.f+(HoverHeight-Distance)*12.f-SurfaceVelocity*6.f,0.f,6500.f);
-        Accel.Z+=Lift*(1.f+FMath::Min(0.f,LiftInput));
+        Accel.Z+=Lift;
     }
-    // Hover suspension stays vertical. Aerodynamic lift banks with the craft, so pulling
-    // through a turn tightens the arc at the cost of some vertical lift.
-    Accel+=Right*BankAcceleration+GetActorUpVector()*AppliedLift;
-    Accel.Z-=FlightVelocity.Z*.85f*FMath::Abs(LiftInput);
-    if (Active) Accel+=Forward*(Throttle*Thrust*(bBoost?1.65f:1.f));
-    const FVector Horizontal(FlightVelocity.X,FlightVelocity.Y,0);
-    Accel-=Horizontal*(.12f+.000006f*Horizontal.Size()+CombinedBrake*2.0f+FMath::Abs(LiftInput)*.10f);
-    Accel-=Right*FVector::DotProduct(FlightVelocity,Right)*(LateralGrip+CombinedBrake*.55f)*(Grounded?1.f:.2f);
+    AppliedThrust=Active?Throttle*Thrust*(bBoost?1.65f:1.f)-FCanyonAerodynamics::ReverseThrust(ReverseLeft,ReverseRight):0.f;
+    Accel+=Right*BankAcceleration+Forward*AppliedThrust;
+    // Inertial flight: thrust follows the nose, velocity does not snap to the attitude.
+    Accel-=FlightVelocity*(.12f+.000006f*FlightVelocity.Size());
+    Accel-=Right*FVector::DotProduct(FlightVelocity,Right)*LateralGrip*(Grounded?1.f:.2f);
     FlightVelocity+=Accel*Dt;
-    const double Speed=FlightVelocity.Size2D();
-    const double Limit=MaxSpeed*(bBoost?1.2:1.);
-    if (Speed>Limit) { FlightVelocity.X*=Limit/Speed; FlightVelocity.Y*=Limit/Speed; }
-    FHitResult Hit;
-    AddActorWorldOffset(FlightVelocity*Dt,true,&Hit);
-    if (Hit.bBlockingHit)
-    {
-        const double Inward=FMath::Max(0.,-FVector::DotProduct(FlightVelocity,Hit.Normal));
-        if (Inward>0.)
-        {
-            FlightVelocity+=Hit.Normal*Inward*1.4;
-            if (Race.Hit(Inward))
-            {
-                UE_LOG(LogTemp, Display,TEXT("CANYON_IMPACT speed=%.1f hp=%.1f"),Inward,Race.Health);
-                if (!bMuted && ImpactSound) UGameplayStatics::PlaySound2D(this,ImpactSound,.65f);
-            }
-        }
-        if (Hit.bStartPenetrating) AddActorWorldOffset(Hit.Normal*(Hit.PenetrationDepth+2.f),false);
-    }
+    FlightVelocity=FlightVelocity.GetClampedToMaxSize(MaxSpeed*(bBoost?1.2f:1.f));
+    MoveWithContacts(Dt);
     const FVector After=GetActorLocation();
     const int32 Next=Race.LastGate+1;
     if (Track->Gates.IsValidIndex(Next) && CrossedRaceGate(Before,After,Track->Gates[Next],Track->GateForward(Next)))

@@ -48,7 +48,7 @@ try {
     foreach ($name in @('Play-VR.cmd','Play-Desktop.cmd','Play-Summit-VR.cmd','Play-Summit-Desktop.cmd')) {
         Copy-Item -LiteralPath (Join-Path $checkout ('scripts\launchers\'+$name)) -Destination $payload
     }
-    $metadata=[ordered]@{version=$version;commit=$commit;branch='main';engine='5.8.3';configuration='Development';platform='Win64';built_utc=(Get-Date).ToUniversalTime().ToString('o');checks=@('Canyon.Rules','World smoke','Aerodynamic controls','River course','Summit course')}
+    $metadata=[ordered]@{version=$version;commit=$commit;branch='main';engine='5.8.3';configuration='Development';platform='Win64';built_utc=(Get-Date).ToUniversalTime().ToString('o');checks=@('Canyon.Rules','World smoke','Vernier attitude and thrust','Terrain contact recovery','River course','Summit course')}
     $metadata | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath (Join-Path $payload 'build-info.json') -Encoding utf8
     $output=Join-Path $taskRoot 'release'
     New-Item -ItemType Directory -Path $output -Force | Out-Null

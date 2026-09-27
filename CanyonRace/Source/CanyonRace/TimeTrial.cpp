@@ -12,14 +12,14 @@
 void AHoverPawn::LoadRecord()
 {
     // Automated drivers and capture teleports must never overwrite a player's best run.
-    if (bSmoke || bCourseTest || bFlightTest || FParse::Param(FCommandLine::Get(),TEXT("CanyonCaptureShot")) || FString(FCommandLine::Get()).Contains(TEXT("CanyonCaptureGate="))) return;
+    if (bSmoke || bCourseTest || bFlightTest || bContactTest || FParse::Param(FCommandLine::Get(),TEXT("CanyonCaptureShot")) || FString(FCommandLine::Get()).Contains(TEXT("CanyonCaptureGate="))) return;
     FString Route;FFileHelper::LoadFileToString(Route,*(FPaths::ProjectContentDir()/TEXT("Canyon/Data")/Track->RouteFile));
     Route.ReplaceInline(TEXT("\r\n"),TEXT("\n"));
     TArray<uint8> Terrain;FFileHelper::LoadFileToArray(Terrain,*(FPaths::ProjectContentDir()/TEXT("Canyon/Data/terrain.f32")));
     const uint32 CourseHash=FCrc::MemCrc32(Terrain.GetData(),Terrain.Num(),FCrc::StrCrc32(*Route));
     const FString Folder=FString(FPlatformProcess::UserSettingsDir())/TEXT("CanyonRace/Records");
     IFileManager::Get().MakeDirectory(*Folder,true);
-    RecordFile=Folder/FString::Printf(TEXT("bank-v1-%08x.txt"),CourseHash);
+    RecordFile=Folder/FString::Printf(TEXT("vernier-v1-%08x.txt"),CourseHash);
     FString Text;
     if (FFileHelper::LoadFileToString(Text,*RecordFile))
     {
